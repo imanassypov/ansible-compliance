@@ -1,0 +1,10 @@
+[c8kv]
+10.0.1.61
+10.0.1.62
+
+[c8kv:vars]
+ansible_network_os=ios
+ansible_user=admin
+ansible_password=cisco
+ansible_become=yes
+ansible_become_password=cisco

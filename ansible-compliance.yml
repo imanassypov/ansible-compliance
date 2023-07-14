@@ -1,0 +1,60 @@
+---
+
+- name: IOSXE Ansible Compliance Validation
+  hosts: c8kv
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+    - name: Checking NTP ACL
+      check_mode: true
+      cisco.ios.ios_acls:
+        state: merged
+        config:
+          - afi: ipv4
+            acls:
+              - name: NTP-Server-ACL
+                acl_type: standard
+                aces:
+                  - sequence: 10
+                    grant: permit
+                    source:
+                      host: 10.0.0.252
+      notify: NTP ACL compliance violation
+
+    - name: Checking NTP
+      check_mode: true
+      cisco.ios.ios_ntp_global:
+        state: replaced
+        config:
+          access_group:
+            peer:
+              - access_list: NTP-Server-ACL
+          servers:
+            - server: 10.0.0.252
+              vrf: MGMT
+      notify: NTP compliance violation
+
+    - name: Checking best-practice global CLI entries
+      check_mode: true
+      cisco.ios.ios_config:
+        lines:
+          - no ip gratuitous-arps
+          - no ip domain lookup
+      notify: Best-practice CLI compliance violation
+
+  handlers:
+    - name: NTP compliance violation
+      ansible.builtin.debug:
+        msg:
+          - "NTP config compliance violation on {{ inventory_hostname }}"
+
+    - name: NTP ACL compliance violation
+      ansible.builtin.debug:
+        msg:
+          - "NTP ACL compliance violation on {{ inventory_hostname }}"
+
+    - name: Best-practice CLI compliance violation
+      ansible.builtin.debug:
+        msg:
+          - "Best practice global CLI compliance violation on {{ inventory_hostname }}"
