@@ -134,3 +134,44 @@ PLAY RECAP *********************************************************************
 10.0.1.61                  : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 10.0.1.62                  : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 ```
+
+## Example 4. Global config best practice CLI missing
+ Let us permit gratuitous ARP on one of the devices, note (ip gratuitous-arps CLI)
+
+```vtl
+C-C8Kv-CE01#sh run | s domain|gratuitous
+ip gratuitous-arps
+no ip domain lookup
+```
+
+Sample ansible playbook output detecting non-compliant global CLI statements in running configuration,
+
+```vtl
+ansible-playbook -i hosts ansible-compliance.yml
+
+PLAY [IOSXE Ansible Compliance Validation] ****************************************************************************************************************************************************************************
+
+TASK [Checking NTP ACL] ***********************************************************************************************************************************************************************************************
+ok: [10.0.1.62]
+ok: [10.0.1.61]
+
+TASK [Checking NTP] ***************************************************************************************************************************************************************************************************
+ok: [10.0.1.62]
+ok: [10.0.1.61]
+
+TASK [Checking best-practice global CLI entries] **********************************************************************************************************************************************************************
+ok: [10.0.1.62]
+[WARNING]: To ensure idempotency and correct diff the input configuration lines should be similar to how they appear if present in the running configuration on device
+changed: [10.0.1.61]
+
+RUNNING HANDLER [Best-practice CLI compliance violation] **************************************************************************************************************************************************************
+ok: [10.0.1.61] => {
+    "msg": [
+        "Best practice global CLI compliance violation on 10.0.1.61"
+    ]
+}
+
+PLAY RECAP ************************************************************************************************************************************************************************************************************
+10.0.1.61                  : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+10.0.1.62                  : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+```
