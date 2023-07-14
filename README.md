@@ -1,2 +1,34 @@
 # ansible-compliance
  Ansible module to validate running configuration compliance against intended state on cisco IOS devices
+
+# Intended use-cases
+ When running a large set of network devices in your environment it becomes important to maintain configuration consistency and compliance of those devices to the 'intended state' or golden references that have been established within the organization. 
+ This ansible playbook demonstrates how compliance validation can be accomplished, and reported on
+
+## Scope
+ This ansible playbook has been tested against Cisco IOS-XE Catalyst 8000v instances deployed on Cisco Modeling Labs (CML) platform
+
+## Compliance Reference or Intended state
+ Let us assume that we want to ensure that every Cisco IOS device in our environment complies with following rules:
+ 1. Have a single NTP server defined. Assume NTP server IP Address of '10.0.0.252' must be defined on each device.
+ 2. Have the NTP server secured by an Access Control List, only allowing that device to synchronize its local time with the defined NTP server. Assume NTP ACL named NTP-Server-ACL must be present on each device, and has NTP server IP address '10.0.0.252' allowed.
+ 3. Have global configuration level best practices applied. In this case, we demonstrate an example of:
+    - disable domain lookup (CLI: 'no ip domain lookup' must be present on each device.)
+    - disable gratuitous arp (CLI: 'no ip gratuitous-arps' must be present on each device)
+
+## Target device inventory
+ For the sake of simplicity we will assume that we have a static text file containing the IP addresses of all of our target IOS devices. In production for an at-scale deployment, you can also utilize sources of dynamic inventory such as Cisco DNA Center, and leverage DNA Center Ansible Inventory plugin to achieve automated access to your device inventory
+ 
+## Example compliant IOS-XE configuration
+```vtl
+C-C8Kv-CE01#sh run | s ntp|NTP-Server-ACL
+ip access-list standard NTP-Server-ACL
+ 10 permit 10.0.0.252
+ntp access-group peer NTP-Server-ACL
+ntp server vrf MGMT 10.0.0.252
+```
+```vtl
+C-C8Kv-CE01#sh run | s domain|gratuitous
+no ip gratuitous-arps
+no ip domain lookup
+```
