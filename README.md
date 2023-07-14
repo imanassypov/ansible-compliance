@@ -95,3 +95,42 @@ PLAY RECAP *********************************************************************
 10.0.1.61                  : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 10.0.1.62                  : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 ```
+
+## Example 3. NTP ACL is misconfigured
+ Let us misconfigure the permit statement of NTP access list
+
+ ```vtl
+C-C8Kv-CE01#sh run | s access-list
+ip access-list standard NTP-Server-ACL
+ 10 permit 1.1.1.1
+ ```
+Sample ansible playbook output detecting non-compliant NTP Access List configuration would look like below in this example
+
+ ```vtl
+ ansible-playbook -i hosts ansible-compliance.yml
+
+PLAY [IOSXE Ansible Compliance Validation] ****************************************************************************************************************************************************************************
+
+TASK [Checking NTP ACL] ***********************************************************************************************************************************************************************************************
+ok: [10.0.1.62]
+changed: [10.0.1.61]
+
+TASK [Checking NTP] ***************************************************************************************************************************************************************************************************
+ok: [10.0.1.62]
+ok: [10.0.1.61]
+
+TASK [Checking best-practice global CLI entries] **********************************************************************************************************************************************************************
+ok: [10.0.1.62]
+ok: [10.0.1.61]
+
+RUNNING HANDLER [NTP ACL compliance violation] ************************************************************************************************************************************************************************
+ok: [10.0.1.61] => {
+    "msg": [
+        "NTP ACL compliance violation on 10.0.1.61"
+    ]
+}
+
+PLAY RECAP ************************************************************************************************************************************************************************************************************
+10.0.1.61                  : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+10.0.1.62                  : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+```

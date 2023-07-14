@@ -9,7 +9,7 @@
     - name: Checking NTP ACL
       check_mode: true
       cisco.ios.ios_acls:
-        state: merged
+        state: replaced
         config:
           - afi: ipv4
             acls:
