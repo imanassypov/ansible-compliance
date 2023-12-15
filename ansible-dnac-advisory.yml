@@ -1,0 +1,63 @@
+---
+- name: Ansible Catalyst Center Advisory Report
+  # hosts: variable can be scoped to DNAC site hierarchy elements
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - advisory_list.yml
+
+  vars:
+    dnac_host: "{{ lookup('env', 'DNAC_HOST') }}"
+    dnac_username: "{{ lookup('env', 'DNAC_USERNAME') }}"
+    dnac_password: "{{ lookup('env', 'DNAC_PASSWORD') }}"
+    dnac_login: &dnac_login
+      dnac_host: "{{ dnac_host }}"
+      dnac_username: "{{ dnac_username }}"
+      dnac_password: "{{ dnac_password }}"
+      dnac_version: 2.3.5.3
+      dnac_verify: false
+
+  tasks:
+    - name: Get per advisory devices
+      cisco.dnac.security_advisories_devices_info:
+        <<: *dnac_login
+        advisoryId: "{{ item }}"
+      with_items: "{{ advisories }}"
+      register: per_advisory_devices
+
+    - name: Populate Advisory Dictionary
+      ansible.builtin.set_fact:
+        advisory_dict: "{{ advisory_dict | default({}) | combine({item.item: item.dnac_response.response}) }}"
+      with_items: "{{ per_advisory_devices.results }}"
+
+    - name: Display advisory list
+      ansible.builtin.debug:
+        msg: "{{ advisory_dict }}"
+
+    - name: Combine impacted device ids into a list
+      ansible.builtin.set_fact:
+        impacted_device_ids_list: "{{ advisory_dict | json_query('*[]') | unique }}"
+
+    - name: Get device names for each device id
+      cisco.dnac.network_device_info:
+        <<: *dnac_login
+        id: "{{ item }}"
+      loop: "{{ impacted_device_ids_list }}"
+      register: impacted_device_details_dict
+
+    - name: Flatten device information
+      ansible.builtin.set_fact:
+        impacted_device_flattened: "{{ impacted_device_details_dict | community.general.json_query('results[].{uid : item, hostname: dnac_response.response.hostname}') | items2dict(key_name='uid', value_name='hostname') }}"
+
+    - name: Combine Advisory with impacted hostname
+      ansible.builtin.set_fact:
+        advisory_to_hostname: "{{ advisory_to_hostname | default({}) | combine({item.key: item.value | map('extract', impacted_device_flattened) | list}) }}"
+      loop: "{{ advisory_dict | dict2items }}"
+      loop_control:
+        loop_var: item
+
+
+    - name: Display impacted device list
+      ansible.builtin.debug:
+        var: advisory_to_hostname

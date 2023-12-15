@@ -1,13 +1,54 @@
 # ansible-compliance
- Ansible module to validate running configuration compliance against intended state on cisco IOS devices
+ This is a collection of ansible based examples to validate various compliance checks with Cisco IOS devices.
+ ansible-compliance.yml: Ansible playbook to validate running configuration compliance against intended state on cisco IOS devices
+ ansible-dnac-advisory.yml: Ansible playbook to lookup hostnames of devices managed by Cisco DNA Center which are subject to a specific security advisory
 
 # Intended use-cases
  When running a large set of network devices in your environment it becomes important to maintain configuration consistency and compliance of those devices to the 'intended state' or golden references that have been established within the organization. 
- This ansible playbook demonstrates how compliance validation can be accomplished, and reported on
+ This ansible playbook demonstrates how compliance validation can be accomplished, and reported on.
+
+ Similarly, when a PSIRT is published it becomes necessary to automate the process of mapping security advisory notices to devices in your network that may be exposed to it. 
 
 ## Scope
- This ansible playbook has been tested against Cisco IOS-XE Catalyst 8000v instances deployed on Cisco Modeling Labs (CML) platform
+ This ansible playbook has been tested against Cisco IOS-XE Catalyst 8000v instances deployed on Cisco Modeling Labs (CML) platform.
+ Ansible PSIRT lookup playbook is tested against Cisco DNA Center 2.3.5.5 lab with about a dozen of devices under its management
 
+# ansible-dnac-advisory.yml
+## pre-requisites
+Install required pip modules
+```
+pip3 install -r requirements.txt
+```
+
+Populate the list of PSIRT advisory id's in advisory_list.yml.
+Note that the advisory id string can be found in "Advisory ID" field, ie ref: https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-aaa-Yx47ZT8Q
+
+```
+---
+advisories:
+ - cisco-sa-aaa-Yx47ZT8Q
+ - cisco-sa-20180328-dhcpr2
+ ```
+Create a local file .env and populate with your DNAC address, username and password.
+Before executing the script, load required env vars into your shell
+
+```
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+export DNAC_HOST="x.x.x.x"
+export DNAC_USERNAME="username"
+export DNAC_PASSWORD="password"
+```
+
+Load env vars
+```
+source .env
+```
+
+Execute playbook
+```
+ansible-playbook ansible-dnac-advisory.yml 
+```
+# ansible-compliance.yml
 ## Compliance Reference or Intended state
  Let us assume that we want to ensure that every Cisco IOS device in our environment complies with following rules:
  1. Have a single NTP server defined. Assume NTP server IP Address of '10.0.0.252' must be defined on each device.
