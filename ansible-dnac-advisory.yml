@@ -31,15 +31,11 @@
         advisory_dict: "{{ advisory_dict | default({}) | combine({item.item: item.dnac_response.response}) }}"
       with_items: "{{ per_advisory_devices.results }}"
 
-    - name: Display advisory list
-      ansible.builtin.debug:
-        msg: "{{ advisory_dict }}"
-
     - name: Combine impacted device ids into a list
       ansible.builtin.set_fact:
         impacted_device_ids_list: "{{ advisory_dict | json_query('*[]') | unique }}"
 
-    - name: Get device names for each device id
+    - name: Get device details for each device id
       cisco.dnac.network_device_info:
         <<: *dnac_login
         id: "{{ item }}"
@@ -56,7 +52,6 @@
       loop: "{{ advisory_dict | dict2items }}"
       loop_control:
         loop_var: item
-
 
     - name: Display impacted device list
       ansible.builtin.debug:
